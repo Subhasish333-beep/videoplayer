@@ -7,7 +7,7 @@ import { app } from "./app.js";
 
 dotenv.config()
 
-console.log("check", process.env);
+// console.log("check", process.env);
 
 connectDB()
 .then(() => {
