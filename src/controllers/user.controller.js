@@ -6,7 +6,7 @@ import {ApiResponse} from "../utils/ApiResponse.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     //get user details from frontend
-    const { username, email, fullname} = req.body;
+    const { username, email, fullname, password} = req.body;
     // console.log("dtata", req.body);
     //validation- notempty
     // if(fullname === "") {
@@ -18,7 +18,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All field are required")
     }
     //check if user exists: username and email
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username}, {email}]
     })
 
@@ -27,15 +27,22 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     //check for images and avatar
     const avatarLocalFilePath = req.files?.avatar[0].path
-    const coverLocalFilePath = req.files?.coverImage[0].path
+    console.log("avatar local file path ===> ", avatarLocalFilePath);
+    // const coverLocalFilePath = req?.files?.coverImage[0]?.path || ""
+    const coverLocalFilePath = req.files.coverImage[0]?.path; 
     if(!avatarLocalFilePath) {
         throw new ApiError(400, "Avatar is required")
     }
      //upload them to cloudinary, avatar
+     console.log("abcd",avatarLocalFilePath);
     const avatar = await uploadOnCloudinary(avatarLocalFilePath);
-    const coverImage = await uploadOnCloudinary(coverLocalFilePath);
+    console.log("avatar image ===>", avatar);
+    let coverImage;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImage = await uploadOnCloudinary(coverLocalFilePath);
+    }
     if(!avatar) {
-        throw new ApiError(400, "Avatar is required")
+        throw new ApiError(400, "Avatars is required")
     }
    
     //create user object - create entry in db
@@ -47,21 +54,18 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase(),
         password
     })
+    //remove password and refresh token from response
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
-
+    //check for user creation
     if(!createdUser) {
         throw new ApiError(500, "Something went wrong")
     }
+     //return res
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered successfully")
-    )
-    //remove password and refresh token from response
-    //check for user creation
-    //return res
-
-    
+    )    
 })
 
 

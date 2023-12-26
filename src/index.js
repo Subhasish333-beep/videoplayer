@@ -5,7 +5,9 @@ import connectDB from "./db/index.js";
 import { app } from "./app.js";
 // ADVANCE WAY
 
-dotenv.config()
+dotenv.config({
+    path: "./.env"
+})
 
 // console.log("check", process.env);
 
